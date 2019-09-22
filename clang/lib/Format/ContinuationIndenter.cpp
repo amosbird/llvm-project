@@ -551,9 +551,10 @@ unsigned ContinuationIndenter::addTokenToState(LineState &State, bool Newline,
   }
 
   unsigned Penalty = 0;
-  if (Newline)
+  if (Newline) {
     Penalty = addTokenOnNewLine(State, DryRun);
-  else
+    State.NewLineColumn = State.Column;
+  } else
     addTokenOnCurrentLine(State, DryRun, ExtraSpaces);
 
   return moveStateToNextToken(State, DryRun, Newline) + Penalty;
@@ -990,6 +991,8 @@ unsigned ContinuationIndenter::getNewLineColumn(const LineState &State) {
     return (Style.IndentWidth * State.Line->First->IndentLevel) +
            Style.IndentWidth;
 
+  if (NextNonComment->is(TT_LambdaLBrace))
+    return std::max(State.NewLineColumn, State.FirstIndent);
   if (NextNonComment->is(tok::l_brace) && NextNonComment->is(BK_Block))
     return Current.NestingLevel == 0 ? State.FirstIndent
                                      : State.Stack.back().Indent;

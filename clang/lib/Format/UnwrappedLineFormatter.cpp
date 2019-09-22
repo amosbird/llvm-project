@@ -854,10 +854,10 @@ protected:
   }
 
   ContinuationIndenter *Indenter;
+  const FormatStyle &Style;
 
 private:
   WhitespaceManager *Whitespaces;
-  const FormatStyle &Style;
   UnwrappedLineFormatter *BlockFormatter;
 };
 
@@ -1072,6 +1072,23 @@ private:
     }
     for (auto I = Path.begin(), E = Path.end(); I != E; ++I) {
       unsigned Penalty = 0;
+      if (Style.BraceWrapping.AfterFunction && I[0]->Previous->State.NextToken &&
+          I[0]->Previous->State.NextToken->is(TT_LambdaLBrace)) {
+        auto x = 1;
+        auto J = I + 1;
+        while (J != E && J[0]->Previous->State.NextToken) {
+          auto &tok = *J[0]->Previous->State.NextToken;
+          if (tok.is(tok::l_brace))
+            ++x;
+          else if (tok.is(tok::r_brace))
+            --x;
+          if (x == 0) {
+            I[0]->NewLine = J[0]->NewLine;
+            break;
+          }
+          ++J;
+        }
+      }
       formatChildren(State, (*I)->NewLine, /*DryRun=*/false, Penalty);
       Penalty += Indenter->addTokenToState(State, (*I)->NewLine, false);
 
@@ -1090,6 +1107,24 @@ private:
 };
 
 } // anonymous namespace
+
+LLVM_ATTRIBUTE_UNUSED static void printDebugInfo(const AnnotatedLine & Line, StringRef Prefix)
+{
+  llvm::dbgs() << Prefix << "Line(" << Line.Level
+               << ", FSC=" << Line.FirstStartColumn << ")"
+               << (Line.InPPDirective ? " MACRO" : "") << ": ";
+  for (auto I = Line.First, E = Line.Last; I != E; ++I) {
+    llvm::dbgs() << I->Tok.getName() << "["
+                 << "T=" << I->getType() << ", OC=" << I->OriginalColumn
+                 << "] ";
+  }
+  for (auto I = Line.First, E = Line.Last; I != E; ++I) {
+    for (auto J = I->Children.begin(), F = I->Children.end(); J != F; ++J) {
+      printDebugInfo(**J, "\nAnnotatedChild: ");
+    }
+  }
+  llvm::dbgs() << "\n";
+}
 
 unsigned UnwrappedLineFormatter::format(
     const SmallVectorImpl<AnnotatedLine *> &Lines, bool DryRun,

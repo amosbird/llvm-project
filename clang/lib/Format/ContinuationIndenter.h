@@ -405,6 +405,9 @@ struct ParenState {
 /// As the indenting tries different combinations this is copied by value.
 struct LineState {
   /// The number of used columns in the current line.
+  unsigned NewLineColumn = 0;
+
+  /// The number of used columns in the current line.
   unsigned Column;
 
   /// The token that needs to be next formatted.

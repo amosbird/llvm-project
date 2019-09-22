@@ -2993,6 +2993,7 @@ llvm::Expected<FormatStyle> getStyle(StringRef StyleName, StringRef FileName,
     return make_string_error(EC.message());
 
   llvm::SmallVector<std::string, 2> FilesToLookFor;
+  FilesToLookFor.push_back(".amos-clang-format");
   FilesToLookFor.push_back(".clang-format");
   FilesToLookFor.push_back("_clang-format");
 

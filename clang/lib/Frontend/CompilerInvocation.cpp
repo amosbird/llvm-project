@@ -4146,7 +4146,7 @@ static bool ParsePreprocessorArgs(PreprocessorOptions &Opts, ArgList &Args,
   }
 
   // Add the ordered list of -includes.
-  for (const auto *A : Args.filtered(OPT_include))
+  for (const auto *A : Args.filtered(OPT_include, OPT_include_no_pch))
     Opts.Includes.emplace_back(A->getValue());
 
   for (const auto *A : Args.filtered(OPT_chain_include))
